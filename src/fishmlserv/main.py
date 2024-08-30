@@ -32,7 +32,7 @@ def fish(length: float, weight: float):
     else:
         prediction = "빙어"
     return {
-            "prediction": prdiction,
+            "prediction": prediction,
                 "length": length,
                 "weight": weight
             }
