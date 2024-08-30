@@ -1,5 +1,5 @@
-# FROM python:3.8
-FROM python:3.8-slim-bullseye
+FROM python:3.8
+#FROM python:3.8-slim-bullseye
 
 # 파일 실행을 코드 밑에서 실행함
 WORKDIR /code
