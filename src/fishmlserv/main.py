@@ -22,9 +22,18 @@ def fish(length: float, weight: float):
     Args:
         length (float): 물고기 길이(cm)
         weight (float): 물고기의 무게(g)
+
     Returns:
         dict: 물고기 종류를 담은 딕셔너리
     """
-
-    return {"length": length, "weight": weight}
+    prediction = "음..."
+    if length >30.0:
+        prediction = "도미"
+    else:
+        prediction = "빙어"
+    return {
+            "prediction": prdiction,
+                "length": length,
+                "weight": weight
+            }
 
