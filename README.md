@@ -21,6 +21,13 @@ $ sudo docker build -t fishmlserv:0.4.0 .
 $ sudo docker run -d --name fmlserv-040 -p 8877:8765 fishmlserv:0.4.0
 ``` 
 
+### Fly.io
+```bash
+$ fly launch --no-deploy
+$ flyctl launch --name mariofish
+$ flyctl scale memory 256
+$ flyctl deploy
+```
 
 ### Ref
 - https://curlconverter.com/python
