@@ -1,5 +1,4 @@
 import os
-import typer
 
 def get_model_path():
     my_path = __file__
@@ -7,12 +6,6 @@ def get_model_path():
     model_path = os.path.join(dir_name, "model.pkl")
     
     return model_path
-
-def main():
-    typer.echo(f"'{get_model_path()}'")
-
-if __name__ == "__main__":
-    typer.run(main)
 
 #def get_model_path():
     # import os ...
