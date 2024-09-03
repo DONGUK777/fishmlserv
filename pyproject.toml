@@ -12,8 +12,10 @@ readme = "README.md"
 license = {text = "MIT"}
 
 [project.scripts]
-get-model-path = "fishmlserv.model.manager:main"
-prediction = "fishmlserv.pre:predict"
+ppping = 'fishmlserv.cli:ppping'
+get-model-path = 'fishmlserv.cli:model_path'
+pp = 'fishmlserv.cli:pp'
+ppp = 'fishmlserv.cli:ppp'
 
 [tool.pdm]
 distribution = false
