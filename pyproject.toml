@@ -1,11 +1,12 @@
 [project]
 name = "fishmlserv"
-version = "0.8.6"
+version = "0.8.7"
 description = "Default template for PDM package"
 authors = [
     {name = "DONGUK777", email = "kimdongyork@gmail.com"},
 ]
 dependencies = [
+    "typer>=0.12.5",
 ]
 requires-python = ">=3.8"
 readme = "README.md"

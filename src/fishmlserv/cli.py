@@ -3,9 +3,6 @@ import typer
 import fire
 
 
-def ppping():
-  print("pong")
-
 def model_path():
   # typer.run(get_model_path)
   fire.Fire(get_model_path)
