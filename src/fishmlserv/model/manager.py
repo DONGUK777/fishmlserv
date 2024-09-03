@@ -1,4 +1,5 @@
 import os
+import typer
 
 def get_model_path():
     my_path = __file__
