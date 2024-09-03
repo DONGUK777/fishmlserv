@@ -12,7 +12,7 @@ readme = "README.md"
 license = {text = "MIT"}
 
 [project.scripts]
-get-model-path = "fishmlserv.model.manager:main"
+get-model-path="fishmlserv.cli:call_path"
 
 [tool.pdm]
 distribution = false
