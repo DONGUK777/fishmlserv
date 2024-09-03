@@ -3,7 +3,7 @@ from fishmlserv.model.manager import get_model_path
 import pickle
 import fire
 
-def predict(length: float, weight: float) -> float:
+def predict(l: float, w: float) -> float:
     model_path = get_model_path()
     with open(model_path, 'rb') as f:
         fish_model = pickle.load(f)
