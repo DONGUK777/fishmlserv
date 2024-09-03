@@ -1,6 +1,6 @@
 [project]
 name = "fishmlserv"
-version = "0.8.8"
+version = "0.8.6"
 description = "Default template for PDM package"
 authors = [
     {name = "DONGUK777", email = "kimdongyork@gmail.com"},
