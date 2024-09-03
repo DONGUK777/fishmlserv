@@ -1,4 +1,5 @@
 import os
+import argparse
 
 def get_model_path():
     my_path = __file__
@@ -6,6 +7,14 @@ def get_model_path():
     model_path = os.path.join(dir_name, "model.pkl")
     
     return model_path
+
+def main():
+    parser = argparse.ArgumentParser(description="Get the model path.")
+    args = parser.parse_args()
+    print(f"'{get_model_path()}'")
+
+if __name__ == "__main__":
+    main()
 
 #def get_model_path():
     # import os ...
