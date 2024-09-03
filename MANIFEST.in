@@ -1,0 +1,2 @@
+recursive-include examples *.txt *.py
+recursive-include src *.pkl
