@@ -7,6 +7,12 @@ def get_model_path():
     
     return model_path
 
+def main():
+    typer.echo(f"'{get_model_path()}'")
+
+if __name__ == "__main__":
+    typer.run(main)
+
 #def get_model_path():
     # import os ...
     # 이 함수 파일의 절대 경로를 받아온다

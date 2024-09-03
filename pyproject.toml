@@ -1,6 +1,6 @@
 [project]
 name = "fishmlserv"
-version = "0.8.0"
+version = "0.8.1"
 description = "Default template for PDM package"
 authors = [
     {name = "DONGUK777", email = "kimdongyork@gmail.com"},
@@ -11,6 +11,8 @@ requires-python = ">=3.8"
 readme = "README.md"
 license = {text = "MIT"}
 
+[project.scripts]
+get-model-path = "model.manager:main"
 
 [tool.pdm]
 distribution = false
