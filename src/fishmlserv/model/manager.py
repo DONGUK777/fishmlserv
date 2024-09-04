@@ -1,6 +1,9 @@
 import os
 import pickle
 
+# 모델을 전역 변수로 캐시
+fish_model = None
+
 def get_model_path():
     my_path = __file__
     dir_name = os.path.dirname(my_path)
@@ -14,8 +17,9 @@ def load_model():
         model_path = get_model_path()
         with open(model_path, "rb") as f:
             fish_model = pickle.load(f)
-
+    
     return fish_model
+
 
 def run_prediction(l: float, w: float):
     """
