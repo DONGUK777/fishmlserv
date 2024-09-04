@@ -38,6 +38,12 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 # 다시 호스트OS(WSL) 로 exit
 root@7244097edb66:/code# exit
 ``` 
+### LB
+```bash
+$ sudo docker build -t ml-lb:1.5.0 LB/
+
+$ sudo docker run --name nginx_lb-2 -d -p 8765:80 
+```
 
 ### Fly.io
 ```bash
