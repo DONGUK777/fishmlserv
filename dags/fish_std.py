@@ -32,7 +32,7 @@ with DAG(
             "Smelt":"빙어"
         }
 
-        df=pd.read_csv("/home/tommy/data/fish/fish100k.csv")
+        df=pd.read_csv("/home/tommy/data/fish/fish_test_data_100k.csv")
         df["LabelKo"]=df["Label"].apply(lambda x:CLASSES[x])
 
         return df
