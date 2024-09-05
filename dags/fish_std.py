@@ -1,123 +1,141 @@
-import pandas as pd
-import os
-import requests
-import json
-from sklearn.metrics import confusion_matrix
 from datetime import datetime, timedelta
 from textwrap import dedent
+
 from airflow import DAG
-from airflow.operators.bash import BashOperator
+
 from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import (
-    ExternalPythonOperator,
-    PythonOperator,
-    PythonVirtualenvOperator,
-    BranchPythonOperator,
-)
+from airflow.operators.python import PythonOperator
+
+from airflow.models import TaskInstance
 
 with DAG(
-        'fish_predict',
+    'fish_ml_serv_std',
     default_args={
         'depends_on_past': False,
+        'email_on_failure': False,
+        'email_on_retry': False,
         'retries': 1,
         'retry_delay': timedelta(seconds=3)
     },
-    description='fish pred Dag',
-    schedule=None,
+    description='fish_ml_serv_std',
+    schedule="@once",
+    start_date=datetime(2024, 9, 1),
     catchup=True,
-    tags=['fish','predict','data'],
+    tags=["fish","ml","serv", "std"],
 ) as dag:
 
-    def loadcsv():
-        file_path = "/home/tommy/data/fish_test_data.csv"
-        save_path = '/home/tommy/data/fish_parquet/'
-        val_data=pd.read_csv(file_path)
-        #val_data['Label'][val_data['Label']=='Bream']=0
-        #val_data['Label'][val_data['Label']=='Smelt']=1
-        if os.path.exists(save_path):
-            val_data.to_parquet(f"{save_path}/fish_test_data.parquet")
-        else:
-            os.makedirs(os.path.dirname(save_path), exist_ok = False)
-            val_data.to_parquet(f"{save_path}/fish_test_data.parquet")
-
-    def prediction():
-        load_path = "/home/tommy/data/fish_parquet/"
-        save_path = "/home/tommy/data/fish_pred_parquet/"
-
-        val_data=pd.read_parquet(load_path)
-        val_data_cut = val_data[:100000]
-        headers = {
-            'accept': 'application/json',
-        }
-        neighbor=[1,5,15,25,49]
-        for j in neighbor:  
-            pred_result=[]
-            for i in range(len(val_data_cut)):
-                params = {
-                'n_neighbors' : j,
-                'length': val_data_cut['Length'][i],
-                'weight': val_data_cut['Weight'][i],
-                }
-                response = requests.get('http://127.0.0.1:8765/fish_ml_predictor', params=params, headers=headers)
-                data=json.loads(response.text)
-                col_name = f"k{j}"
-                if data['prediction'] == '도미':
-                    pred_result.append('Bream')
-                else :
-                    pred_result.append('Smelt')
-
-            val_data_cut[f'{col_name}']=pred_result
-
-            if os.path.exists(save_path):
-                val_data_cut.to_parquet(f"{save_path}/fish_pred{j}.parquet")
-            else:
-                os.makedirs(os.path.dirname(save_path), exist_ok = False)
-                val_data_cut.to_parquet(f"{save_path}/fish_pred{j}.parquet")
-  
-
-    def aggregate():
-        load_path = "/home/tommy/data/fish_pred_parquet/fish_pred49.parquet"
-        save_path = "/home/tommy/data/fish_agg_parquet/"
-
-        val_data=pd.read_parquet(load_path)
-        val_data.replace({'Bream': 0, 'Smelt': 1}, inplace=True)
-        val_data.to_parquet(f"{save_path}/fish_transform.parquet")
+    def load_csv():
+        import pandas as pd
         
-        for i in range(4,8):
-            cm=confusion_matrix(val_data.iloc[:,3],val_data.iloc[:,i])
-            Real=['Real_Bream','Real_Smelt']
-            pred=['pred_Bream','pred_Smelt']
-            cm_df = pd.DataFrame(cm, index=Real, columns=pred)
-            print(cm_df)
-            if os.path.exists(save_path):
-                cm_df.to_parquet(f"{save_path}/fish_agg{i}.parquet")
-            else:
-                os.makedirs(os.path.dirname(save_path), exist_ok = False)
-                cm_df.to_parquet(f"{save_path}/fish_agg{i}.parquet")
+        CLASSES={
+            "Bream":"도미",
+            "Smelt":"빙어"
+        }
 
+        df=pd.read_csv("/home/tommy/data/fish/fish100k.csv")
+        df["LabelKo"]=df["Label"].apply(lambda x:CLASSES[x])
 
-    start=EmptyOperator(
-        task_id="start"
-    )
-    end = EmptyOperator(
-        task_id="end"
-    )
+        return df
+
+    def predict(neighbor,**context):
+        import requests as reqs
+
+        df=context['task_instance'].xcom_pull(task_ids=f'load.csv')
+        
+        #nneighbor=op_args[0]
+        nneighbor=neighbor
+        
+        tmp=[]
+        
+        for i,d in df.iterrows():
+            #http://localhost:70/fish_std?length=100&weight=50&nneighbor=5
+            resp=reqs.get(f"http://localhost:70/fish_std?length={d['Length']}&weight={d['Weight']}&nneighbor={nneighbor}").text
+            tmp.append(eval(resp)["prediction"])
+
+        return tmp
+
+    def agg(**context):
+        df=context['task_instance'].xcom_pull(task_ids=f'load.csv')
+        pred1=context['task_instance'].xcom_pull(task_ids=f'predict1')
+        pred5=context['task_instance'].xcom_pull(task_ids=f'predict5')
+        pred15=context['task_instance'].xcom_pull(task_ids=f'predict15')
+        pred25=context['task_instance'].xcom_pull(task_ids=f'predict25')
+        pred49=context['task_instance'].xcom_pull(task_ids=f'predict49')
+
+        df["pred1"]=pred1
+        df["pred5"]=pred5
+        df["pred15"]=pred15
+        df["pred25"]=pred25
+        df["pred49"]=pred49
+
+        accuracy1 = ( sum(df["LabelKo"]==df["pred1"]) / len(df["pred1"]) ) * 100
+        accuracy5 = ( sum(df["LabelKo"]==df["pred5"]) / len(df["pred5"]) ) * 100
+        accuracy15 = ( sum(df["LabelKo"]==df["pred15"]) / len(df["pred15"]) ) * 100
+        accuracy25 = ( sum(df["LabelKo"]==df["pred25"]) / len(df["pred25"]) ) * 100
+        accuracy49 = ( sum(df["LabelKo"]==df["pred49"]) / len(df["pred49"]) ) * 100
+
+        print(f"accuracy1:{accuracy1}%")
+        print(f"accuracy5:{accuracy5}%")
+        print(f"accuracy15:{accuracy15}%")
+        print(f"accuracy25:{accuracy25}%")
+        print(f"accuracy49:{accuracy49}%")
+
+        df.to_parquet("/home/tommy/data/fish/result.parquet")
+        
+
+    task_start = EmptyOperator(task_id="start")
+    task_end = EmptyOperator(task_id="end")
 
     load_csv = PythonOperator(
-        task_id="load.csv",
-        python_callable = loadcsv ,
-    )
+                task_id="load.csv",
+                python_callable=load_csv,
+            )
+    predict1 = PythonOperator(
+                task_id = "predict1",
+                python_callable=predict,
+                #op_args=[1]
+                op_kwargs={
+                    "neighbor":1
+                }
+            )
 
-    predict = PythonOperator(
-        task_id="predict",
-        python_callable = prediction ,
-    )
+    predict5 = PythonOperator(
+                task_id = "predict5",
+                python_callable=predict,
+                #op_args=[5]
+                op_kwargs={
+                    "neighbor":5
+                }
+            )
 
+    predict15 = PythonOperator(
+                task_id = "predict15",
+                python_callable=predict,
+                #op_args=[15]
+                op_kwargs={
+                    "neighbor":15
+                }
+            )
+
+    predict25 = PythonOperator(
+                task_id = "predict25",
+                python_callable=predict,
+                #op_args=[25]
+                op_kwargs={
+                    "neighbor":25
+                }
+            )
+    predict49 = PythonOperator(
+                task_id = "predict49",
+                python_callable=predict,
+                #op_args=[49]
+                op_kwargs={
+                    "neighbor":49
+                }
+            )
     agg = PythonOperator(
-        task_id="agg",
-        python_callable = aggregate ,
-    )
+                task_id = "agg",
+                python_callable=agg,
+            )
 
-
-
-    start >> load_csv >> predict >> agg >> end
+    task_start >> load_csv >> [predict1, predict5, predict15, predict25, predict49 ] >> agg >> task_end 
