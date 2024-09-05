@@ -4,8 +4,8 @@ def pred(l, w, url="http://localhost:8765/fish"):
   # GET 요청을 보낼 URL 설정
   
   params = {
-      "length": 10,
-      "weight": 10
+      "length": l,
+      "weight": w
   }
 
   # GET 요청 보내기
